@@ -27,14 +27,19 @@ scene.fog = new THREE.Fog(0x87CEEB, 1, 100);
 const slopeGeometry = new THREE.PlaneGeometry(20, 1000);
 const slopeMaterial = new THREE.MeshPhongMaterial({ 
     color: 0xFFFFFF,
-    shininess: 10
+    shininess: 10,
+    side: THREE.DoubleSide // Render both sides of the plane
 });
 const slope = new THREE.Mesh(slopeGeometry, slopeMaterial);
-slope.rotation.x = -Math.PI / 6; // Angle the slope
-slope.position.z = -10;
+slope.rotation.x = -Math.PI / 6; // 30-degree angle
+slope.position.z = 0;
 slope.position.y = -2;
 slope.receiveShadow = true;
 scene.add(slope);
+
+// Calculate slope-related constants
+const SLOPE_ANGLE = Math.PI / 6; // 30 degrees
+const SLOPE_HEIGHT_OFFSET = Math.sin(SLOPE_ANGLE) * 2; // Vertical offset based on slope angle
 
 // Create skier
 const skierGroup = new THREE.Group();
@@ -68,8 +73,8 @@ skierGroup.add(leftSki);
 skierGroup.add(rightSki);
 
 // Position skier
-skierGroup.position.set(0, 0, 0);
-skierGroup.rotation.x = Math.PI / 6; // Counter slope angle
+skierGroup.position.set(0, -2 + SLOPE_HEIGHT_OFFSET, 0);
+skierGroup.rotation.x = SLOPE_ANGLE; // Match slope angle
 scene.add(skierGroup);
 
 // Add lighting
@@ -138,7 +143,12 @@ function createTree(x: number, z: number): THREE.Group {
         tree.add(top);
     }
 
-    tree.position.set(x, 0, z);
+    // Calculate y position based on slope
+    const distanceFromStart = Math.abs(z);
+    const heightOffset = -2 + Math.sin(SLOPE_ANGLE) * distanceFromStart;
+    
+    tree.position.set(x, heightOffset, z);
+    tree.rotation.x = SLOPE_ANGLE; // Align with slope
     tree.scale.set(0.7, 0.7, 0.7);
     return tree;
 }
@@ -157,7 +167,12 @@ function createRock(x: number, z: number): THREE.Group {
     rockMesh.scale.y = 0.7;
     rock.add(rockMesh);
 
-    rock.position.set(x, -0.4, z);
+    // Calculate y position based on slope
+    const distanceFromStart = Math.abs(z);
+    const heightOffset = -2 + Math.sin(SLOPE_ANGLE) * distanceFromStart;
+    
+    rock.position.set(x, heightOffset - 0.4, z);
+    rock.rotation.x = SLOPE_ANGLE; // Align with slope
     rock.rotation.y = Math.random() * Math.PI;
     return rock;
 }
@@ -210,10 +225,11 @@ function resetGame() {
     score = 0;
     isGameOver = false;
     speed = 0.2;
+    frameCount = 0;
     
     // Reset skier position
-    skierGroup.position.set(0, 0, 0);
-    skierGroup.rotation.set(Math.PI / 6, 0, 0);
+    skierGroup.position.set(0, -2 + SLOPE_HEIGHT_OFFSET, 0);
+    skierGroup.rotation.set(SLOPE_ANGLE, 0, 0);
     
     // Remove all obstacles
     obstacles.forEach(obstacle => scene.remove(obstacle));
@@ -242,8 +258,9 @@ function animate() {
         // Gradually increase speed
         speed += 0.0001;
 
-        // Move skier forward
+        // Move skier forward and adjust height based on slope
         skierGroup.position.z -= speed;
+        skierGroup.position.y = -2 + Math.sin(SLOPE_ANGLE) * Math.abs(skierGroup.position.z);
         
         // Handle left/right movement
         if (keys.left && skierGroup.position.x > -8) {
@@ -264,12 +281,13 @@ function animate() {
 
         // Update camera position to follow skier
         camera.position.x = skierGroup.position.x;
+        camera.position.y = skierGroup.position.y + 2;
         camera.position.z = skierGroup.position.z + 4;
         camera.lookAt(skierGroup.position);
         
         // Update score
         score += 1;
-        document.getElementById('score')!.textContent = `Score: ${Math.floor(score / 60)}`; // Update every second
+        document.getElementById('score')!.textContent = `Score: ${Math.floor(score / 60)}`;
 
         renderer.render(scene, camera);
     }
