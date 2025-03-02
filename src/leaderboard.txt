@@ -1,0 +1,10 @@
+John,100
+Alice,98
+NewPlayer,95
+Bob,85
+Sarah,72
+Mike,65
+Singh,2
+Cheema,1
+Byren,0
+Loser,0

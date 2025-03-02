@@ -7,50 +7,303 @@
     <style>
         body {
             margin: 0;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(135deg, #1e4d92 0%, #2c89c9 100%);
+            font-family: Arial, sans-serif;
             overflow: hidden;
         }
-        canvas {
-            display: block;
+        
+        .menu-container {
+            text-align: center;
+            color: white;
+            padding: 40px 60px;
+            border-radius: 15px;
+            background-color: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(10px);
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            min-width: 300px;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+            animation: menuAppear 0.8s ease-out forwards;
         }
+        
+        @keyframes menuAppear {
+            0% {
+                opacity: 0;
+                transform: translate(-50%, -40%);
+            }
+            100% {
+                opacity: 1;
+                transform: translate(-50%, -50%);
+            }
+        }
+        
+        h1 {
+            font-size: 64px;
+            margin-bottom: 40px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+            white-space: nowrap;
+            animation: titleGlow 2s ease-in-out infinite;
+        }
+        
+        @keyframes titleGlow {
+            0%, 100% {
+                text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+            }
+            50% {
+                text-shadow: 0 0 20px rgba(255, 255, 255, 0.5),
+                             0 0 30px rgba(255, 255, 255, 0.3);
+            }
+        }
+        
+        .menu-button {
+            font-size: 24px;
+            padding: 15px 40px;
+            margin: 10px auto;
+            cursor: pointer;
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .menu-button:before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                120deg,
+                transparent,
+                rgba(255, 255, 255, 0.3),
+                transparent
+            );
+            transition: 0.5s;
+        }
+        
+        .menu-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+            background: linear-gradient(135deg, #45a049 0%, #4CAF50 100%);
+        }
+        
+        .menu-button:hover:before {
+            left: 100%;
+        }
+        
+        .menu-button:active {
+            transform: translateY(1px);
+        }
+
+        canvas {
+            display: none;
+        }
+
         #score {
-            position: fixed;
+            display: none;
+            position: absolute;
             top: 20px;
             right: 20px;
             color: white;
             font-family: Arial, sans-serif;
             font-size: 24px;
-            z-index: 100;
-        }
-        #game-over {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            color: white;
-            font-family: Arial, sans-serif;
-            text-align: center;
-            display: none;
-            z-index: 100;
-        }
-        #restart-button {
-            padding: 10px 20px;
-            font-size: 18px;
-            cursor: pointer;
-            background: #4CAF50;
-            border: none;
-            color: white;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+            padding: 10px;
+            background-color: rgba(0, 0, 0, 0.3);
             border-radius: 5px;
+            z-index: 1000;
+        }
+
+        #game-over {
+            display: none;
+        }
+
+        .snow {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: white;
+            border-radius: 50%;
+            pointer-events: none;
+            animation: fall linear infinite;
+        }
+
+        @keyframes fall {
+            from {
+                transform: translateY(-50vh) translateX(0);
+            }
+            to {
+                transform: translateY(100vh) translateX(20px);
+            }
+        }
+
+        .leaderboard {
             margin-top: 20px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .leaderboard h2 {
+            font-size: 24px;
+            margin-bottom: 15px;
+            color: #fff;
+            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.3);
+        }
+
+        .leaderboard-table {
+            width: 100%;
+            border-collapse: collapse;
+            color: white;
+        }
+
+        .leaderboard-table th,
+        .leaderboard-table td {
+            padding: 8px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .leaderboard-table th {
+            font-weight: bold;
+            color: #4CAF50;
+        }
+
+        /* Scrollbar styling */
+        .leaderboard::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .leaderboard::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+        }
+
+        .leaderboard::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 4px;
+        }
+
+        .leaderboard::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.4);
         }
     </style>
 </head>
 <body>
+    <div class="menu-container">
+        <h1>SLOPE RUNNER</h1>
+        <button id="startButton" class="menu-button">NEW RUN</button>
+        <div class="leaderboard">
+            <h2>Leaderboard</h2>
+            <table class="leaderboard-table">
+                <thead>
+                    <tr>
+                        <th>Rank</th>
+                        <th>Player</th>
+                        <th>Score</th>
+                    </tr>
+                </thead>
+                <tbody id="leaderboard-body">
+                    <!-- Leaderboard data will be inserted here -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Game UI elements (initially hidden) -->
     <div id="score">Score: 0</div>
     <div id="game-over">
         <h1>Game Over!</h1>
         <p>Final Score: <span id="final-score">0</span></p>
         <button id="restart-button">Play Again</button>
     </div>
-    <script type="module" src="/src/main.ts"></script>
+
+    <script>
+        // Store interval ID to clear it later
+        let snowInterval;
+
+        function createSnow() {
+            const snowflake = document.createElement('div');
+            snowflake.classList.add('snow');
+            snowflake.style.left = Math.random() * window.innerWidth + 'px';
+            snowflake.style.opacity = Math.random() * 0.7 + 0.3;
+            snowflake.style.animationDuration = Math.random() * 3 + 3 + 's';
+            
+            document.body.appendChild(snowflake);
+
+            setTimeout(() => {
+                snowflake.remove();
+            }, 6000);
+        }
+
+        // Start snow effect
+        snowInterval = setInterval(createSnow, 100);
+
+        // Game initialization
+        document.getElementById('startButton').addEventListener('click', function() {
+            // Stop snow effect
+            clearInterval(snowInterval);
+            
+            // Remove existing snowflakes
+            const snowflakes = document.querySelectorAll('.snow');
+            snowflakes.forEach(snowflake => snowflake.remove());
+
+            // Hide menu
+            document.querySelector('.menu-container').style.display = 'none';
+            // Show score
+            document.getElementById('score').style.display = 'block';
+            // Load and start the game
+            const script = document.createElement('script');
+            script.type = 'module';
+            script.src = '/src/main.ts';
+            document.body.appendChild(script);
+        });
+
+        // Load leaderboard data
+        async function loadLeaderboard() {
+            try {
+                const response = await fetch('/src/leaderboard.txt');
+                const data = await response.text();
+                const scores = data.trim().split('\n')
+                    .map(line => {
+                        const [name, score] = line.split(',');
+                        return { name, score: parseInt(score) };
+                    })
+                    .sort((a, b) => b.score - a.score);
+
+                const leaderboardBody = document.getElementById('leaderboard-body');
+                leaderboardBody.innerHTML = scores
+                    .map((entry, index) => `
+                        <tr>
+                            <td>${index + 1}</td>
+                            <td>${entry.name}</td>
+                            <td>${entry.score}</td>
+                        </tr>
+                    `)
+                    .join('');
+            } catch (error) {
+                console.error('Error loading leaderboard:', error);
+            }
+        }
+
+        // Load leaderboard when page loads
+        loadLeaderboard();
+    </script>
 </body>
 </html> 

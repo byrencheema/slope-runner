@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Slope Runner</title>
+    <p1>fkfoekedmedoem</p1>
+    <style>
+        body {
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(135deg, #1e4d92 0%, #2c89c9 100%);
+            font-family: Arial, sans-serif;
+            overflow: hidden;
+        }
+        
+        .menu-container {
+            text-align: center;
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            background-color: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(5px);
+        }
+        
+        h1 {
+            font-size: 64px;
+            margin-bottom: 40px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+        
+        .menu-button {
+            font-size: 24px;
+            padding: 15px 40px;
+            margin: 10px;
+            cursor: pointer;
+            background-color: #4CAF50;
+            border: none;
+            border-radius: 5px;
+            color: white;
+            transition: background-color 0.3s;
+            text-decoration: none;
+            display: block;
+        }
+        
+        .menu-button:hover {
+            background-color: #45a049;
+            transform: scale(1.05);
+        }
+
+        .snow {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: white;
+            border-radius: 50%;
+            pointer-events: none;
+            animation: fall linear infinite;
+        }
+
+        @keyframes fall {
+            from {
+                transform: translateY(-10vh) translateX(0);
+            }
+            to {
+                transform: translateY(100vh) translateX(20px);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="menu-container">
+        <h1>SLOPE RUNNER</h1>
+        <a href="game.html" class="menu-button">NEW RUN</a>
+        <!-- Add more menu buttons here if needed -->
+    </div>
+
+    <script>
+        // Snow effect
+        function createSnow() {
+            const snowflake = document.createElement('div');
+            snowflake.classList.add('snow');
+            snowflake.style.left = Math.random() * window.innerWidth + 'px';
+            snowflake.style.opacity = Math.random();
+            snowflake.style.animationDuration = Math.random() * 3 + 2 + 's';
+            
+            document.body.appendChild(snowflake);
+
+            setTimeout(() => {
+                snowflake.remove();
+            }, 5000);
+        }
+
+        setInterval(createSnow, 100);
+    </script>
+</body>
+</html> 
