@@ -86,6 +86,14 @@ export class AudioSystem {
     }
   }
 
+  resetGains() {
+    if (!this.initialized) return;
+    let t = this.ctx.currentTime;
+    this.windGain.gain.setValueAtTime(0, t);
+    this.rainGain.gain.setValueAtTime(0, t);
+    this.engineGain.gain.setValueAtTime(0, t);
+  }
+
   update(dt, player, storm) {
     if (!this.initialized) return;
     let t = this.ctx.currentTime;

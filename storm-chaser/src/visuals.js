@@ -238,8 +238,12 @@ export class LightningSystem {
   }
 
   strike(sx, sz, intensity) {
-    // Clear old bolts
-    while (this.boltGroup.children.length) this.boltGroup.remove(this.boltGroup.children[0]);
+    // Clear old bolts and dispose geometries
+    while (this.boltGroup.children.length) {
+      let child = this.boltGroup.children[0];
+      if (child.geometry) child.geometry.dispose();
+      this.boltGroup.remove(child);
+    }
 
     let ox = sx + (Math.random() - 0.5) * 80;
     let oz = sz + (Math.random() - 0.5) * 80;
@@ -300,9 +304,9 @@ export function updateRain(rain, dt, playerX, playerZ, stormZone, windAngle) {
     pos[idx + 2] += windZ * dt;
 
     if (pos[idx + 1] < 0) {
-      pos[idx] = playerX + (Math.random() - 0.5) * 200;
+      pos[idx] = (Math.random() - 0.5) * 200;
       pos[idx + 1] = 60 + Math.random() * 20;
-      pos[idx + 2] = playerZ + (Math.random() - 0.5) * 200;
+      pos[idx + 2] = (Math.random() - 0.5) * 200;
     }
   }
   rain.geometry.attributes.position.needsUpdate = true;

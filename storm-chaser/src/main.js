@@ -204,6 +204,7 @@ function startChase() {
     audio = new AudioSystem();
   }
   audio.init();
+  audio.resetGains();
 
   storm = new Storm(stormConfig);
   player = new Player();
@@ -248,7 +249,7 @@ function updateHUD() {
   } else if (player.multiplier >= 2) {
     document.getElementById('multiplier-display').style.color = '#ffaa00';
   } else {
-    document.getElementById('multiplier-display').style.color = '#ffaa00';
+    document.getElementById('multiplier-display').style.color = '#aaaaaa';
   }
 
   document.getElementById('speed-display').textContent = Math.round(Math.abs(player.speed)) + ' mph';
@@ -299,9 +300,11 @@ function updateHUD() {
     dangerOverlay.classList.remove('visible');
   }
 
-  // Health bar via status color
+  // Health display
   let healthColor = player.health > 60 ? '#44ff44' : player.health > 30 ? '#ffaa00' : '#ff4444';
-  document.getElementById('speed-display').style.color = healthColor;
+  let healthEl = document.getElementById('health-display');
+  healthEl.textContent = Math.round(player.health) + '%';
+  healthEl.style.color = healthColor;
 }
 
 // ──── PHOTO ────
@@ -344,11 +347,7 @@ function updateCamera() {
     
     let lookX = player.x + Math.sin(player.rotation) * 10;
     let lookZ = player.z + Math.cos(player.rotation) * 10;
-    let lookTarget = new THREE.Vector3(lookX, 3, lookZ);
-    
-    let currentLook = new THREE.Vector3();
-    camera.getWorldDirection(currentLook);
-    camera.lookAt(lookTarget);
+    camera.lookAt(lookX, 3, lookZ);
   } else {
     // First person from vehicle
     camera.position.set(player.x, 3.5, player.z);

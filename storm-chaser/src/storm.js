@@ -40,6 +40,18 @@ export class Storm {
     this.wobble += dt * 0.5;
     this.steerAngle = Math.sin(this.wobble) * 0.3 + Math.sin(this.wobble * 0.7) * 0.15;
     
+    // Steer storm back toward center when it drifts too far
+    let distFromCenter = Math.sqrt(this.x * this.x + this.z * this.z);
+    if (distFromCenter > 400) {
+      let pullStrength = (distFromCenter - 400) / 200;
+      let angleToCenter = Math.atan2(-this.x, -this.z);
+      let angleDiff = angleToCenter - this.heading;
+      // Normalize to -PI..PI
+      while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
+      while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
+      this.heading += angleDiff * Math.min(pullStrength, 1) * dt * 0.5;
+    }
+
     let currentHeading = this.heading + this.steerAngle;
     this.x += Math.sin(currentHeading) * this.speed * dt;
     this.z += Math.cos(currentHeading) * this.speed * dt;
