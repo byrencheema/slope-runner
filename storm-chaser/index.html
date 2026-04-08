@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Storm Chaser</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { overflow: hidden; background: #000; font-family: 'Courier New', monospace; }
+    canvas { display: block; }
+
+    #ui-overlay {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      pointer-events: none; z-index: 10;
+    }
+    #ui-overlay > * { pointer-events: auto; }
+
+    /* FORECAST SCREEN */
+    #forecast-screen {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      background: radial-gradient(ellipse at center, #1a1a2e 0%, #0a0a15 100%);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      color: #e0e0e0;
+    }
+    #forecast-screen h1 {
+      font-size: 52px; color: #ff6b35; text-shadow: 0 0 30px rgba(255,107,53,0.5);
+      margin-bottom: 8px; letter-spacing: 6px;
+    }
+    #forecast-screen .subtitle {
+      font-size: 14px; color: #888; margin-bottom: 40px; letter-spacing: 3px;
+    }
+    .forecast-panel {
+      background: rgba(255,255,255,0.05); border: 1px solid rgba(255,107,53,0.3);
+      border-radius: 8px; padding: 30px 40px; max-width: 600px; width: 90%;
+      margin-bottom: 20px;
+    }
+    .forecast-panel h2 {
+      color: #ff6b35; font-size: 18px; margin-bottom: 15px;
+      border-bottom: 1px solid rgba(255,107,53,0.2); padding-bottom: 8px;
+    }
+    .forecast-row {
+      display: flex; justify-content: space-between; padding: 6px 0;
+      font-size: 14px;
+    }
+    .forecast-row .label { color: #888; }
+    .forecast-row .value { color: #fff; font-weight: bold; }
+    .forecast-row .value.danger { color: #ff4444; }
+    .forecast-row .value.warn { color: #ffaa00; }
+    .forecast-row .value.good { color: #44ff44; }
+
+    #start-chase-btn {
+      margin-top: 20px; padding: 15px 50px; font-size: 20px;
+      background: linear-gradient(135deg, #ff6b35, #d4441c);
+      border: none; color: white; border-radius: 6px; cursor: pointer;
+      font-family: 'Courier New', monospace; letter-spacing: 3px;
+      transition: all 0.3s; text-transform: uppercase;
+    }
+    #start-chase-btn:hover {
+      transform: translateY(-2px); box-shadow: 0 5px 25px rgba(255,107,53,0.4);
+    }
+    .controls-hint {
+      margin-top: 20px; font-size: 12px; color: #555; text-align: center;
+    }
+
+    /* HUD */
+    #hud {
+      display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      pointer-events: none;
+    }
+    #hud-score {
+      position: absolute; top: 20px; right: 20px;
+      background: rgba(0,0,0,0.7); border: 1px solid rgba(255,107,53,0.4);
+      padding: 12px 20px; border-radius: 6px; color: #fff; font-size: 16px;
+    }
+    #hud-score .score-val { color: #ff6b35; font-size: 24px; font-weight: bold; }
+    #hud-score .multiplier { color: #ffaa00; font-size: 14px; }
+
+    #hud-compass {
+      position: absolute; top: 20px; left: 50%; transform: translateX(-50%);
+      background: rgba(0,0,0,0.7); border: 1px solid rgba(255,255,255,0.2);
+      padding: 8px 20px; border-radius: 6px; color: #fff; font-size: 14px;
+    }
+
+    #hud-status {
+      position: absolute; top: 20px; left: 20px;
+      background: rgba(0,0,0,0.7); border: 1px solid rgba(255,107,53,0.4);
+      padding: 12px 20px; border-radius: 6px; color: #fff; font-size: 13px;
+      min-width: 200px;
+    }
+    #hud-status .status-row { padding: 3px 0; display: flex; justify-content: space-between; }
+    #hud-status .status-label { color: #888; }
+    #hud-status .status-val { font-weight: bold; }
+
+    #hud-timer {
+      position: absolute; top: 70px; left: 50%; transform: translateX(-50%);
+      color: #fff; font-size: 28px; font-weight: bold;
+      text-shadow: 0 0 10px rgba(0,0,0,0.8);
+    }
+
+    #hud-radio {
+      position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
+      background: rgba(0,0,0,0.8); border: 1px solid rgba(255,107,53,0.3);
+      padding: 10px 25px; border-radius: 6px; color: #ffaa00; font-size: 13px;
+      max-width: 500px; text-align: center; opacity: 0; transition: opacity 0.5s;
+    }
+    #hud-radio.visible { opacity: 1; }
+
+    #hud-danger {
+      position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+      color: #ff0000; font-size: 36px; font-weight: bold;
+      text-shadow: 0 0 20px rgba(255,0,0,0.8); opacity: 0;
+      transition: opacity 0.3s; pointer-events: none;
+    }
+    #hud-danger.visible { opacity: 1; }
+
+    #score-popup {
+      position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%);
+      color: #ff6b35; font-size: 28px; font-weight: bold;
+      text-shadow: 0 0 15px rgba(255,107,53,0.6); opacity: 0;
+      pointer-events: none; transition: all 0.5s;
+    }
+
+    /* GAME OVER */
+    #gameover-screen {
+      display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.85); flex-direction: column;
+      align-items: center; justify-content: center; color: #e0e0e0;
+    }
+    #gameover-screen h1 { font-size: 48px; color: #ff6b35; margin-bottom: 10px; }
+    #gameover-screen .final-score {
+      font-size: 64px; color: #fff; font-weight: bold; margin: 10px 0;
+    }
+    #gameover-screen .result-reason {
+      font-size: 18px; color: #ff4444; margin-bottom: 30px;
+    }
+    .stats-panel {
+      background: rgba(255,255,255,0.05); border: 1px solid rgba(255,107,53,0.3);
+      border-radius: 8px; padding: 20px 30px; margin-bottom: 20px; min-width: 300px;
+    }
+    .stat-row { display: flex; justify-content: space-between; padding: 5px 0; font-size: 14px; }
+    .stat-row .label { color: #888; }
+    .stat-row .value { color: #fff; }
+
+    #play-again-btn {
+      padding: 12px 40px; font-size: 18px;
+      background: linear-gradient(135deg, #ff6b35, #d4441c);
+      border: none; color: white; border-radius: 6px; cursor: pointer;
+      font-family: 'Courier New', monospace; letter-spacing: 2px;
+    }
+    #play-again-btn:hover { box-shadow: 0 5px 25px rgba(255,107,53,0.4); }
+
+    /* Minimap */
+    #minimap {
+      position: absolute; bottom: 20px; right: 20px;
+      width: 180px; height: 180px;
+      background: rgba(0,0,0,0.7); border: 1px solid rgba(255,107,53,0.4);
+      border-radius: 6px;
+    }
+    #minimap canvas { width: 100%; height: 100%; border-radius: 6px; }
+
+    /* Camera indicator */
+    #camera-flash {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(255,255,255,0.8); opacity: 0; pointer-events: none;
+      transition: opacity 0.1s;
+    }
+  </style>
+</head>
+<body>
+  <div id="ui-overlay">
+    <!-- FORECAST -->
+    <div id="forecast-screen">
+      <h1>STORM CHASER</h1>
+      <div class="subtitle">INTERCEPT . DOCUMENT . SURVIVE</div>
+      <div class="forecast-panel">
+        <h2>// TODAY'S FORECAST</h2>
+        <div class="forecast-row"><span class="label">Storm Type:</span><span class="value" id="fc-type">--</span></div>
+        <div class="forecast-row"><span class="label">Intensity:</span><span class="value" id="fc-intensity">--</span></div>
+        <div class="forecast-row"><span class="label">Movement:</span><span class="value" id="fc-movement">--</span></div>
+        <div class="forecast-row"><span class="label">Tornado Risk:</span><span class="value" id="fc-tornado">--</span></div>
+        <div class="forecast-row"><span class="label">Wind Speed:</span><span class="value" id="fc-wind">--</span></div>
+        <div class="forecast-row"><span class="label">Visibility:</span><span class="value" id="fc-visibility">--</span></div>
+      </div>
+      <div class="forecast-panel">
+        <h2>// STORM POSITION</h2>
+        <div class="forecast-row"><span class="label">Initial Bearing:</span><span class="value" id="fc-bearing">--</span></div>
+        <div class="forecast-row"><span class="label">Distance:</span><span class="value" id="fc-distance">--</span></div>
+        <div class="forecast-row"><span class="label">Heading:</span><span class="value" id="fc-heading">--</span></div>
+      </div>
+      <button id="start-chase-btn">BEGIN CHASE</button>
+      <div class="controls-hint">
+        WASD/Arrows to drive &bull; SPACE to photograph &bull; C to toggle camera view
+      </div>
+    </div>
+
+    <!-- HUD -->
+    <div id="hud">
+      <div id="hud-score">
+        <div>SCORE</div>
+        <div class="score-val" id="score-display">0</div>
+        <div class="multiplier" id="multiplier-display">x1.0</div>
+      </div>
+      <div id="hud-compass"><span id="compass-text">N</span></div>
+      <div id="hud-status">
+        <div class="status-row"><span class="status-label">Speed:</span><span class="status-val" id="speed-display">0 mph</span></div>
+        <div class="status-row"><span class="status-label">Storm Dist:</span><span class="status-val" id="dist-display">-- mi</span></div>
+        <div class="status-row"><span class="status-label">Zone:</span><span class="status-val" id="zone-display">Clear</span></div>
+        <div class="status-row"><span class="status-label">Danger:</span><span class="status-val" id="danger-display" style="color:#44ff44">LOW</span></div>
+        <div class="status-row"><span class="status-label">Photos:</span><span class="status-val" id="photo-display">0</span></div>
+      </div>
+      <div id="hud-timer">7:00</div>
+      <div id="hud-radio"></div>
+      <div id="hud-danger">WARNING</div>
+      <div id="score-popup"></div>
+      <div id="minimap"><canvas id="minimap-canvas" width="180" height="180"></canvas></div>
+      <div id="camera-flash"></div>
+    </div>
+
+    <!-- GAME OVER -->
+    <div id="gameover-screen">
+      <h1 id="gameover-title">CHASE COMPLETE</h1>
+      <div class="result-reason" id="gameover-reason"></div>
+      <div class="final-score" id="gameover-score">0</div>
+      <div class="stats-panel">
+        <div class="stat-row"><span class="label">Photos Taken:</span><span class="value" id="stat-photos">0</span></div>
+        <div class="stat-row"><span class="label">Best Photo:</span><span class="value" id="stat-best">0</span></div>
+        <div class="stat-row"><span class="label">Closest Approach:</span><span class="value" id="stat-closest">--</span></div>
+        <div class="stat-row"><span class="label">Max Multiplier:</span><span class="value" id="stat-multiplier">x1.0</span></div>
+        <div class="stat-row"><span class="label">Tornado Seen:</span><span class="value" id="stat-tornado">No</span></div>
+        <div class="stat-row"><span class="label">Time Survived:</span><span class="value" id="stat-time">0:00</span></div>
+      </div>
+      <button id="play-again-btn">CHASE AGAIN</button>
+    </div>
+  </div>
+
+  <script type="module" src="./src/main.js"></script>
+</body>
+</html>
